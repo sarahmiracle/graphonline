@@ -1,0 +1,10 @@
+{
+  "name": "graphonline",
+  "version": "0.0.1",
+  "dependencies": {
+    "newline-json": "latest",
+    "socket.io": "latest",
+    "express": "latest",
+    "fs-extra": "latest"
+  }
+}
