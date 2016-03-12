@@ -1,7 +1,7 @@
 var fs = require("fs-extra");
 var app = require('express')();
 var http = require('http').Server(app);
-var io = require('socket.io')(http);
+var io;
 var configf = require('./config');
 var jsonpars = require('newline-json').Parser;
 
@@ -37,31 +37,34 @@ var process_arguments = function()
 
 //----------------------------Client------------------------------//
 var users_n = 0;
-io.on('connection', function(socket){
-    console.log('a user connected');
-    users_n++;
-    io.emit('users_n',users_n);
-    socket.emit('ready',"?");
-    socket.on('coloring', function(msg){
-        if(msg!='yes') data.save_result(msg);
-        var tmp = data.get_newdata();
-        if(!data.no_data && tmp!=null) socket.emit('color',tmp);
+var serv_init = function() {
+    io = require('socket.io')(http);
+    io.on('connection', function (socket) {
+        console.log('a user connected');
+        users_n++;
+        io.emit('users_n', users_n);
+        socket.emit('ready', "?");
+        socket.on('coloring', function (msg) {
+            if (msg != 'yes') data.save_result(msg);
+            var tmp = data.get_newdata();
+            if (!data.no_data && tmp != null) socket.emit('color', tmp);
+        });
+        socket.on('disconnect', function () {
+            console.log('user disconnected');
+            users_n--;
+            io.emit('users_n', users_n);
+        });
     });
-    socket.on('disconnect', function(){
-        console.log('user disconnected');
-        users_n--;
-        io.emit('users_n',users_n);
-    });
-});
-
+};
 
 //-------------------------------Data------------------------------//
-var queuemax = 100, queuemin = 90;
+var queuemax = 300, queuemin = 250;
 var data = {
     stream_end: false,
     no_data: false,
     folder: "",
     data_queue: [],
+    serv_inited: false,
     init: function(left, right, part) {
         this.set_foldername(left, right, part);
         this.init_readfile();
@@ -89,7 +92,14 @@ var data = {
         this.jspar.on('data', function(chunk)  {
 //            console.log(chunk);
             data.data_queue.push(chunk);
-            if(data.data_queue.length >= queuemax) data.jspar.pause();
+            if(data.data_queue.length >= queuemax)
+            {
+                data.jspar.pause();
+                if(!data.serv_inited) {
+                    serv_init();
+                    data.serv_inited = true;
+                }
+            }
         });
         this.jspar.on('end',function(){
             data.stream_end = true;

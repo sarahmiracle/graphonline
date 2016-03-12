@@ -5,6 +5,7 @@
     "newline-json": "latest",
     "socket.io": "latest",
     "express": "latest",
-    "fs-extra": "latest"
+    "fs-extra": "latest",
+    "deferred": "latest"
   }
 }
