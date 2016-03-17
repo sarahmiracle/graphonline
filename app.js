@@ -103,6 +103,10 @@ var data = {
         });
         this.jspar.on('end',function(){
             data.stream_end = true;
+            if(!data.serv_inited) {
+                serv_init();
+                data.serv_inited = true;
+            }
         });
     },
     get_newdata: function() {
